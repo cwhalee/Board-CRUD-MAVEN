@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="ino.web.freeBoard.mapper.FreeBoardMapper">
+	
+	
+	<select id="freeBoardGetList" resultType="freeBoardDto"> <!-- resultType="ino.web.board.dto.BoardDto" -->
+		SELECT NUM, TITLE, NAME, TO_CHAR(REGDATE,'YYYY/MM/DD') REGDATE, CONTENT FROM FREEBOARD
+		ORDER BY LPAD( NUM, 5 ) DESC
+	</select>
+	
+	<select id="getBoardListCnt" parameterType="freeBoardPaging" resultType="int">
+    	select count(*)
+    	from FREEBOARD
+    	where 1=1
+    	<choose>
+    		<when test="searchType neq ''">
+    		and lower( ${searchType} ) like '%'|| lower(#{keyword}) ||'%'
+    		</when>
+    	</choose>
+    </select>
+    
+    <select id="getBoardList" parameterType="freeBoardPaging" resultType="freeBoardDto">
+    	select *
+			from(
+			    select rownum as rnum, t.*
+			    from
+			    (
+			        select NUM, TITLE, NAME, TO_CHAR(REGDATE,'YYYY/MM/DD') REGDATE, CONTENT
+			        from FREEBOARD
+			        where 1=1
+			        <choose>			        
+			        <when test="searchType neq ''">
+			        and lower( ${searchType} ) like '%'|| lower(#{keyword}) ||'%'			
+			        </when>
+			        </choose>
+			    ) t
+			    where rownum <![CDATA[<=]]> #{startList}+#{sizePerPage} order by NUM DESC
+			)
+		where rnum <![CDATA[>=]]> #{startList} 
+    </select>
+
+	
+	<insert id="freeBoardInsertPro" parameterType="freeBoardDto" useGeneratedKeys="true" keyProperty="num" keyColumn="num">
+		INSERT INTO FREEBOARD(NUM, TITLE, NAME, REGDATE, CONTENT)
+		VALUES( FREEBOARDNUM_SEQ.NEXTVAL, #{title}, #{name}, SYSDATE, #{content})
+	</insert>
+	
+	<select id="freeBoardDetailByNum" resultType="freeBoardDto" parameterType="int">
+		SELECT NUM, TITLE, NAME, TO_CHAR(REGDATE,'YYYY/MM/DD') REGDATE, CONTENT FROM FREEBOARD
+		WHERE NUM=#{num}
+	</select>
+	
+	<update id="freeBoardUpdatePro" parameterType="freeBoardDto">
+		UPDATE freeboard SET CONTENT=#{content} WHERE num=#{num}
+	</update>
+	
+	<delete id="freeBoardDeletePro" parameterType="freeBoardDto">
+		DELETE freeboard WHERE num=#{num}
+	</delete>
+	
+	<!-- 자료실 -->
+	
+	<select id="getFileListCnt" parameterType="freeBoardPaging" resultType="int">
+    	select count(*)
+    	from FILEBOARD
+    	where 1=1
+    	<choose>
+    		<when test="searchType neq ''">
+    		and lower( ${searchType} ) like '%'|| lower(#{keyword}) ||'%'
+    		</when>
+    	</choose>
+    </select>
+    
+    <select id="getFileList" parameterType="freeBoardPaging" resultType="freeBoardDto">
+    	select *
+			from(
+			    select rownum as rnum, t.*
+			    from
+			    (
+			        select NUM, TITLE, NAME, TO_CHAR(REGDATE,'YYYY/MM/DD') REGDATE, CONTENT
+			        from FILEBOARD
+			        where 1=1
+			        <choose>			        
+			        <when test="searchType neq ''">
+			        and lower( ${searchType} ) like '%'|| lower(#{keyword}) ||'%'			
+			        </when>
+			        </choose>
+			    ) t
+			    where rownum <![CDATA[<=]]> #{startList}+#{sizePerPage} order by NUM DESC
+			)
+		where rnum <![CDATA[>=]]> #{startList} 
+    </select>
+    
+	<insert id="fileBoardInsertPro" parameterType="freeBoardDto" useGeneratedKeys="true" keyProperty="num" keyColumn="num">
+		INSERT INTO FILEBOARD(NUM, TITLE, NAME, REGDATE, CONTENT)
+		VALUES( FILEBOARDNUM_SEQ.NEXTVAL, #{title}, #{name}, SYSDATE, #{content})
+	</insert>
+	
+	<insert id="filesInsertPro" parameterType="multiFiles">
+		INSERT INTO UPLOADFILES(FILENUM, NUM, FILENAME, NFILENAME, UPLOADDATE)
+		VALUES( UPLOADFILE_SEQ.NEXTVAL, #{num}, #{filename}, #{nfilename}, SYSDATE)
+	</insert>
+	
+	<select id="getFileBoardByNum" resultType="freeBoardDto" parameterType="int">
+		SELECT NUM, TITLE, NAME, TO_CHAR(REGDATE,'YYYY/MM/DD') REGDATE, CONTENT FROM FILEBOARD
+		WHERE NUM=#{num}
+	</select>
+	
+	<select id="getFileByNum" resultType="MultiFiles" parameterType="int">
+		SELECT * FROM UPLOADFILES WHERE NUM=#{num}
+	</select>
+	
+	<update id="getUpdateFileboardByNum" parameterType="freeBoardDto">
+		UPDATE fileboard SET TITLE=#{title}, CONTENT=#{content} WHERE num=#{num}
+	</update>
+	
+	<delete id="uploadFileDel" parameterType="int">
+		DELETE UPLOADFILES WHERE NUM=#{num}
+	</delete>
+	<delete id="deleteFileByNum" parameterType="int">
+		DELETE FILEBOARD WHERE NUM=#{num}
+	</delete>
+	
+	<select id="deleteUploadFiles" parameterType="int" resultType="MultiFiles">
+		SELECT NFILENAME FROM UPLOADFILES WHERE NUM=#{num}
+	</select>
+	
+	<delete id="deleteFileByName" parameterType="String">
+		DELETE UPLOADFILES WHERE NFILENAME=#{nfilename}
+	</delete>
+	
+</mapper>
